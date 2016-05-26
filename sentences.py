@@ -7,6 +7,7 @@ punct = re.compile(r"\s[a-tv-z]\s|(&.*?;)|[^a-z\s]+?", re.I)
 
 
 class SentenceIter(object):
+    """Lazily iterate over sentences which can be spread over multiple files."""
 
     def __init__(self, root, extension='*.txt', iscow=False):
         """

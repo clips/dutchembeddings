@@ -6,6 +6,7 @@ from sppmimodel import SPPMIModel
 
 
 class Relation:
+    """A class for making relationship/analogy tests easy"""
 
     def __init__(self, pathtoset):
         """
@@ -54,24 +55,9 @@ if __name__ == "__main__":
 
     # Create the relation set tuples, and saves the result to question-words.txt
     Relation.create_set(cats, "data/question-words.txt")
-
-    # Each SPPMI model is represented as a triple of filepaths.
-    # The first file is the word2id dictionary
-    # The second file is a sparse matrix in numpy sparse matrix format.
-    # The third file is a file with word -> frequency mappings.
-    # All of these files can be created by using the create_sppmi script.
-    paths = [("word2id.json", "sparse_matrix.npz", "wordfreqs.json")]
+    
+    pathtomodel = ""
+    model = Word2Vec.load_word2vec_format(pathtomodel)
 
     rel = Relation("data/question-words.txt")
-
-    scores = []
-
-    logging.basicConfig(level=logging.INFO)
-
-    for word2id, sparse, vocab in paths:
-        print("starting model {0}".format(sparse))
-        # Load the SPPMI model
-        model = SPPMIModel(word2id, sparse, vocab)
-
-        # Test the model.
-        scores.append(rel.test_model(model))
+    scores = rel.test_model(model)

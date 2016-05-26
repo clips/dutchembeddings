@@ -16,6 +16,7 @@ removepunct = re.compile(r"[^\w\s'-]")
 
 
 class DialectDetector(object):
+    """Detection of regional variants of language based on word2vec or a dictionary"""
 
     def __init__(self, dictionary, model):
         """
@@ -231,15 +232,17 @@ if __name__ == "__main__":
 
     dictionary = {k: set(v) for k, v in json.load(open('data/dictionaries.json')).items()}
 
+    # Load the word2vec model.
     pathtomodel = ""
-
     model = Word2Vec.load_word2vec_format(pathtomodel)
 
     dia = DialectDetector(dictionary=dictionary, model=model)
 
-    x = json.load(open("data/x.json"))
-    y = json.load(open("data/y.json"))
+    # Load data and labels.
+    x = json.load(open(""))
+    y = json.load(open(""))
 
+    # Set MRR to true or false.
     mrr = True
     y = dia.featurize_labels(y, include_countries=False)
     result, mean = dia.run_dictionary(x, y, mrr)

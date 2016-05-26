@@ -9,6 +9,7 @@ from io import open
 
 
 class SPPMIModel(Word2Vec):
+    """Class which allows for addressing an SPPMI matrix like a word2vec model."""
 
     def __init__(self, pathtomapping, pathtovectors, pathtocounts="", initkeys=()):
         """
