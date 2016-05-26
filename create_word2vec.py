@@ -5,17 +5,21 @@ from sentences import SentenceIter
 
 
 class Word2VecFactory:
+    """
+    A simple wrapper around the Word2Vec implementation of gensim.
+    For reproducibility, just use the default settings.
+    """
 
     @staticmethod
-    def create_word2vec(basedir, num_workers=12, size=320, threshold=5):
+    def create(basedir, num_workers=12, size=320, threshold=5):
         """
-        Creates a word2vec model using the Gensim implementation.
+        Creates a word2vec model using the Gensim word2vec implementation.
 
         :param basedir: the dir from which to get the documents.
         :param num_workers: the number of workers to use for training word2vec
         :param size: the size of the resulting vectors.
         :param threshold: the frequency threshold.
-        :return:
+        :return: the model.
         """
 
         logging.basicConfig(level=logging.INFO)

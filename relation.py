@@ -25,6 +25,8 @@ class Relation:
         :return: a dictionary with scores per section, and a total score.
         """
 
+        # The most_similar assignment is neccessary because the most_similar function might refer to the original
+        # Word2Vec function.
         return model.accuracy(self.pathtoset, most_similar=model.__class__.most_similar, restrict_vocab=None)
 
     @staticmethod
@@ -47,25 +49,29 @@ class Relation:
 
 if __name__ == "__main__":
 
-    cats = json.load(open("semtest.json"))
-    Relation.create_set(cats, "question-words.txt")
+    # Loads the category file for the Dutch relation test words.
+    cats = json.load(open("data/semtest.json"))
 
-    paths = [("word2id.json", "sparse_roularta_10_1.npz", "combined_2/combined_2freqs.json"),
-             ("word2id.json", "sparse_roularta_10_5.npz", "combined_2/combined_2freqs.json"),
-             ("word2id.json", "sparse_roularta_10_15.npz", "combined_2/combined_2freqs.json"),
-             ("word2id.json", "sparse_roularta_5_1.npz", "combined_2/combined_2freqs.json"),
-             ("word2id.json", "sparse_roularta_5_5.npz", "combined_2/combined_2freqs.json"),
-             ("word2id.json", "sparse_roularta_5_15.npz", "combined_2/combined_2freqs.json")]
+    # Create the relation set tuples, and saves the result to question-words.txt
+    Relation.create_set(cats, "data/question-words.txt")
 
-    rel = Relation("question-words.txt")
+    # Each SPPMI model is represented as a triple of filepaths.
+    # The first file is the word2id dictionary
+    # The second file is a sparse matrix in numpy sparse matrix format.
+    # The third file is a file with word -> frequency mappings.
+    # All of these files can be created by using the create_sppmi script.
+    paths = [("word2id.json", "sparse_matrix.npz", "wordfreqs.json")]
+
+    rel = Relation("data/question-words.txt")
 
     scores = []
 
     logging.basicConfig(level=logging.INFO)
 
-    for d, mtr, vocab in paths:
-        print("starting model {0}".format(mtr))
-        model = SPPMIModel(d, mtr, vocab)
+    for word2id, sparse, vocab in paths:
+        print("starting model {0}".format(sparse))
+        # Load the SPPMI model
+        model = SPPMIModel(word2id, sparse, vocab)
+
+        # Test the model.
         scores.append(rel.test_model(model))
-    # Load model here.
-    # something like: model.accuracy("questions-words.txt")

@@ -19,7 +19,11 @@ from sentences import SentenceIter
 logger = logging.getLogger(__name__)
 
 
-class SPPMI(object):
+class SPPMIFactory(object):
+    """
+    A class for creating SPPMI matrices out of a raw corpus.
+    Based on code by Radim Rehurek: www.github.com/piskvorky/
+    """
 
     @staticmethod
     def _save_freqs(di, outpath):
@@ -53,11 +57,11 @@ class SPPMI(object):
     @staticmethod
     def _save_word2id(word2id, filename):
         """
-        Saves the word2id mapping to a filepath as a JSON file.
+        Saves the word2id mapping as a JSON file.
 
         :param word2id: the word2id mapping.
         :param filename: the filename to which to save.
-        :return:
+        :return: None
         """
         json.dump(word2id, open(filename, 'w'))
 
@@ -66,13 +70,16 @@ class SPPMI(object):
         """
         Creates an Shifted Positive Pointwise Mutual Information matrix.
 
-        :param pathtomapping: The path to the id2word mapping.
-        :param pathtocorpus: The path to the corpus folder. The corpus can be spread out over multiple files or folders.
-        :param corpusname: The name of the corpus.
-        :param window: The window in which to consider co-occurrences.
-        :param numtokeep: The num of most frequent words to keep.
+        :param pathtomapping: The path to the id2word mapping. If this is left empty, the id2word mapping gets
+        recreated. Warning: this takes a long time.
+        :param pathtocorpus: The path to the corpus folder. The corpus can be spread out over multiple files or folders,
+        and is read iteratively.
+        :param corpusname: The name of the corpus. Used for saving the files.
+        :param window: The window used to consider co-occurrences.
+        :param numtokeep: The number of most frequent words to keep. Note that the matrix is non-sparse.
+        Because of this, the memory requirements of the code are quadratic.
         :param save_raw: Whether to save the raw co-occurrence matrix as a numpy matrix.
-        :param shifts: The number of shifts to try, and the magnitude of those shifts. Each shifted matrix
+        :param shifts: The shifts to apply to the co-occurrence matrix. Each shifted matrix
         gets saved as a separate model.
         """
 
@@ -82,10 +89,9 @@ class SPPMI(object):
             id2word = Dictionary(SentenceIter(pathtocorpus), prune_at=None)
             id2word.filter_extremes(no_below=5, keep_n=numtokeep)
             id2word.compactify()
+            logger.info("Creating the word2id took {0} seconds".format(time.time() - start))
         else:
             id2word = Dictionary.load(pathtomapping)
-
-        print("Dictionary took {0} seconds".format(time.time() - start))
 
         inter = time.time()
 
@@ -94,37 +100,44 @@ class SPPMI(object):
         corpus = SentenceIter(pathtocorpus)
         raw = get_cooccur(corpus, word2id, window=window)
 
-        print("Rawwing took {0} seconds".format(time.time() - inter))
+        logger.info("Creating raw co-occurrence matrix took {0} seconds".format(time.time() - inter))
 
         if save_raw:
             np.save('{0}-cooccur.npy'.format(corpusname), raw)
 
-        SPPMI._save_word2id(word2id, "{0}mapping.json".format(corpusname))
-        SPPMI._save_freqs(id2word, "{0}freqs.json".format(corpusname))
+        SPPMIFactory._save_word2id(word2id, "{0}mapping.json".format(corpusname))
+        SPPMIFactory._save_freqs(id2word, "{0}freqs.json".format(corpusname))
 
-        raw = SPPMI.raw2pmi(raw)
+        raw = SPPMIFactory.raw2pmi(raw)
 
         for k in shifts:
-            sparse = SPPMI.shift_clip_pmi(np.copy(raw), k_shift=k)
-            SPPMI._save_sparse_mtr(sparse, "{0}-SPPMI-sparse-{1}-shift.npz".format(corpusname, k))
+            sparse = SPPMIFactory.shift_clip_pmi(np.copy(raw), k_shift=k)
+            SPPMIFactory._save_sparse_mtr(sparse, "{0}-SPPMI-sparse-{1}-shift.npz".format(corpusname, k))
             del sparse
 
     @staticmethod
-    def fromraw(pathtoraw, corpusname, shifts=(1, 5, 10)):
+    def raw2ppmi(pathtoraw, corpusname, shifts=(1, 5, 10)):
         """
-        Shift from a matrix of raw co-occurrence counts.
+        Creates a PPMI matrix out of a raw co-occurrence matrix.
+        First a PMI matrix is created (see raw2pmi, below).
+        Any negative entries in this matrix are then truncated to 0 and shifted by a factor of -log(k).
+
+        This function can take multiple shift magnitudes, each of which is performed and saved separately.
 
         :param pathtoraw: The path to the raw co-occurrence matrix.
         :param corpusname: The name of the corpus.
-        :param shifts: A list of containing shift magnitudes.
-        :return:
+        :param shifts: A tuple containing shift magnitudes.
+        :return: None
         """
 
-        raw = SPPMI.raw2pmi(np.load(pathtoraw))
+        # Create the PMI matrix
+        pmi = SPPMIFactory.raw2pmi(np.load(pathtoraw))
 
         for k in shifts:
-            sparse = SPPMI.shift_clip_pmi(np.copy(raw), k_shift=k)
-            SPPMI._save_sparse_mtr(sparse, "{0}-SPPMI-sparse-{1}-shift.npz".format(corpusname, k))
+            # Shift and clip a copy of the pmi matrix.
+            sparse = SPPMIFactory.shift_clip_pmi(np.copy(pmi), k_shift=k)
+            # save the PPMI matrix.
+            SPPMIFactory._save_sparse_mtr(sparse, "{0}-SPPMI-sparse-{1}-shift.npz".format(corpusname, k))
             del sparse
 
     @staticmethod
@@ -153,7 +166,7 @@ class SPPMI(object):
     def shift_clip_pmi(pmimtr, k_shift=1.0):
         """
         Turns a pmi matrix into a PPMI matrix by setting all negative values to 0 and then shifting by a factor of
-        log(k).
+        -log(k).
 
         :param pmimtr: The matrix of PMI values.
         :param k_shift: The shift factor.
@@ -171,11 +184,3 @@ class SPPMI(object):
             pmimtr[i] = matutils.unitvec(vec)
 
         return matutils.corpus2csc(matutils.Dense2Corpus(pmimtr, documents_columns=False)).T
-
-if __name__ == "__main__":
-
-    #logging.basicConfig(level=logging.INFO)
-    #SPPMI.create("", "../../ord2vec-corpus/combined", "combined", 5)
-    #SPPMI.create("", "../../word2vec-corpus/combined", "combined_2", 10)
-
-    SPPMI.create("", "../../word2vec-corpus/roularta", "roularta", 10)

@@ -5,11 +5,21 @@ import scipy.sparse
 from gensim import matutils
 from gensim.models import Word2Vec
 from gensim.models.word2vec import Vocab
+from io import open
 
 
 class SPPMIModel(Word2Vec):
 
     def __init__(self, pathtomapping, pathtovectors, pathtocounts="", initkeys=()):
+        """
+        SPPMI model equivalent to a gensim word2vec model.
+
+        :param pathtomapping:
+        :param pathtovectors:
+        :param pathtocounts:
+        :param initkeys:
+        :return:
+        """
 
         super(SPPMIModel, self).__init__()
         self.word2index = json.load(open(pathtomapping))

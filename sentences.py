@@ -32,6 +32,9 @@ class SentenceIter(object):
                 self.filenames.append(os.path.join(root, filename))
 
     def __iter__(self):
+        """
+        Corpus iterator which can be passed to the SPPMI and Word2vec functions.
+        """
 
         # assume corpus consists of multiple documents
         for filename in self.filenames:

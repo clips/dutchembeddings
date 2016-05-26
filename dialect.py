@@ -1,18 +1,14 @@
 # -*- coding: utf-8 -*-
-
 import logging
-import operator
-import csv
-import re
-import numpy as np
-import json
-import time
 
-from collections import defaultdict
-from string import punctuation
+import operator
+import re
+import json
+
+import numpy as np
+
 from gensim.models import Word2Vec
-from itertools import chain
-from sppmimodel import SPPMIModel
+from collections import defaultdict, OrderedDict
 
 # Same prepocessing used in the corpus. For consistency.
 COW_preprocess = re.compile(r"(&.*?;)|((?<=\s)([a-tv-z]|\[.*\]|[^a-zA-Z\s]+?))(?=\s|\b$)")
@@ -21,214 +17,153 @@ removepunct = re.compile(r"[^\w\s'-]")
 
 class DialectDetector(object):
 
-    def __init__(self, datapath, labelpath):
+    def __init__(self, dictionary, model):
         """
         Initialization of regions + countries.
         """
 
-        # Noord-brabant ontbreekt in het w2v model.
         self._regions = (u"antwerpen", u"oost-vlaanderen", u"west-vlaanderen",
                          u"groningen", u"friesland", u"drenthe", u"overijssel", u"flevoland",
                          u"gelderland", u"utrecht", u"noord-holland", u"zuid-holland", u"zeeland", u"noord-brabant",
                          u"limburg", u"vlaams-brabant")
 
-        self._countries = (u"belgië", u"nederland")  # misschien ook gewesten (vlaanderen?)
+        self._countries = (u"belgië", u"nederland")
 
-        self.model = None
-        self._dictionaries = None
-        self.data, labels = self.load_frogged_data(datapath, labelpath)
-
-        self.labels = []
-
-        locales = self._regions + self._countries
-        for l in labels:
-            self.labels.append([1 if x == locales.index(l) else 0 for x in range(len(locales))])
-
-        self.labels = np.array(self.labels)
-        self.labels_region = self.labels[:, range(len(self._regions))]
-
-    @staticmethod
-    def load_frogged_data(pathtofile, pathtolabels):
-        """
-        Returns posts and labels from a frogged file.
-
-        :param pathtofile: path to the frog file.
-        :param pathtolabels: path to the labels file.
-        :param regions: list of regions.
-        :return: A tuple of posts and labels.
-        """
-
-        posts = []
-        labels = []
-
-        f = csv.reader(open(pathtolabels))
-        post = []
-        for d in open(pathtofile, encoding='utf-8'):
-
-            if not d.rstrip():
-                posts.append(post)
-                post = []
-                labels.append(next(f)[0].lower())
-            else:
-                d = d.split()
-                if d[1] not in punctuation:
-                    post.append((d[1].lower(), d[2]))
-
-        return posts, labels
+        self._model = model
+        self._dictionaries = dictionary
 
     @property
     def regions(self):
+        """
+        The list of regions.
+
+        :return: a list of regions.
+        """
 
         return self._regions
 
     @property
     def countries(self):
+        """
+        The list of countries.
+
+        :return: a list of countries.
+        """
 
         return self._countries
 
-    @property
-    def locations(self):
-
-        return self._countries + self._regions
-
-    def load_dictionaries(self, pathtodicts):
+    def featurize_labels(self, labels, include_countries=False):
         """
-        load the dictionaries from disk and assign them to the _dictionaries param
+        Featurizes a list of labels to a matrix of one-hot encoded binary vectors.
 
-        Format: {LOCATION (e.g. limburg): [list_of_words]}
-
-        :param pathtodicts: the path to the JSON file.
-        :return: None
+        :param labels: A list of labels
+            Ex. ['antwerpen', 'limburg', 'friesland', ..., 'friesland']
+        :param include_countries: Whether to include the countries in the binary vector.
+        Including the countries is necessary when using them as distractors, but these are
+        never used for evaluation.
+        :return: A matrix of vectors.
         """
 
-        self._dictionaries = json.load(open(pathtodicts))
+        locales = self.regions if not include_countries else self.regions + self.countries
+        y = [[1 if x == locales.index(l) else 0 for x in range(len(locales))] for l in labels]
 
-    def task_1(self):
+        return np.array(y)
+
+    def accuracy(self, y_pred, y, mrr):
         """
-        Task 1 assumes that every post belongs to a region, and does not take countries into account.
+        Calculates the accuracy score of a system as compared to set of gold standard labels.
 
-        :param sentences: list of sentences
-        :return: a list of labels, one for each sentence
-        """
+        :param y_pred: A numpy array of vectors containing MRR scores.
+            Ex. [[0, 0,    0.5,  1, 0, 0.33, 0, ..., 0],
+                 [0, 1,    0.25, 0, 0, 0,    0, ..., 0],
+                 [0, 0.25, 0,    0, 0, 0,    0, ..., 1],
+                 [...                                 ],
+                 [...                            ,0.11]]
 
-        return self._calc_sentences_model(self.data, self._regions)
+        :param y: A list of one-hot encoded vectors, representing the true labels.
+            Ex. [[0, 0, 0, 1, 0, 0, 0, ..., 0],
+                 [0, 1, 0, 0, 0, 0, 0, ..., 0],
+                 [0, 0, 0, 0, 0, 0, 0, ..., 1],
+                 [...                        ],
+                 [...                      ,0]]
 
-    def task_2(self):
-        """
-        Task 2 assumes that every post belongs to a region or country.
+        :param mrr: Whether to use the Mean Reciprocal Rank. If this is false, it has the effect of removing
+        any scores which are not exactly 0, in effect only taking into account the items which were ranked first.
+        :return: A tuple of accuracy scores per individual label, and the mean of those scores.
 
-        :param sentences: list of sentences
-        :return: a list of labels, one for each sentence
-        """
-
-        return self._calc_sentences_model(self.data, self._regions + self._countries)
-
-    def task_3(self):
-        """
-        Task 3 is a dictionary baseline.
-
-        :param sentences: list of sentences
-        :return: a list of labels, one for each sentence
-        """
-
-        return self._calc_sentences_dict(self.data, self._regions)
-
-    def task_4(self):
-        """
-        Task 4 is like task 2, but instead of using the countries as possible labels, we remove any
-        words in the sentence that are given the label country, effectively removing their influence.
-
-        :param sentences: list of sentences
-        :return: list of labels, one for each sentence
+            Ex. ({'antwerpen': 0.22, 'limburg': 0.12, ...}, 0.143)
         """
 
-        return self._calc_sentences_model(self.data, self._regions + self._countries, use_filter=True)
-
-    def task_5(self):
-        """
-        Like task 4, but using the dictionaries as filters.
-
-        :param sentences: list of sentences
-        :return: list of labels, one for each sentence
-        """
-
-        return self._calc_sentences_model(self.data, self._regions + self._countries, use_dict_filter=True)
-
-    @staticmethod
-    def detect(function, labels, mrr):
-
-        """
-        Runs a w2v dialect detection using a specific function.
-
-        :param function: the function to use
-        :param labels: a list of labels
-        :param mrr: whether to use Mean Reciprocal Rank or Accuracy
-        :return: The score (MRR or Accuracy) and the mean score.
-        """
-
-        X = function()
+        y = np.array(y)
 
         if not mrr:
-            X[X < 1.0] = 0.0
+            y_pred[y_pred < 1.0] = 0.0
 
-        # Multiplying X with the labels has the effect of giving incorrect answers weight 0.
+        result = y_pred * y
+        mean = np.sum(result) / np.sum(y)
 
-        result = X * labels
-        mean = np.sum(result) / np.sum(labels)
+        return {k: v for k, v in zip(self._regions, np.sum(result, axis=0) / np.sum(y, axis=0))}, mean
 
-        return list(np.sum(result, axis=0) / np.sum(labels, axis=0)), mean
-
-    def run_model(self, mrr):
-
-        scores = dict()
-
-        scores[self.task_1.__name__] = self.detect(self.task_1, self.labels_region, mrr)
-        scores[self.task_4.__name__] = self.detect(self.task_4, self.labels, mrr)
-
-        return scores
-
-    def run_dict(self, mrr):
-
-        scores = dict()
-
-        scores[self.task_3.__name__] = self.detect(self.task_3, self.labels_region, mrr)
-
-        return scores
-
-    def _calc_sentences_model(self, sentences, locations, use_filter=False, use_dict_filter=False):
+    def run_dictionary(self, data, y_true, mrr):
         """
-        Calculates, for each sentence, for each word in that sentence, the closest neighbour in the list of locations.
-        The location that is most often chosen is then returned as the most likely region for this sentence.
+        Runs the dialect detection procedure using a dictionary.
+
+        :param data: The sentences on which to run.
+        :param y_true: The gold standard labels.
+        :param mrr: Whether to use Mean Reciprocal Rank or Accuracy.
+        :return: An accuracy score or the MRR score, depending on the MRR parameter.
+        """
+
+        y_pred = self._calc_sentences_w2v(data, self._regions, use_dict=True)
+        return self.accuracy(y_pred=y_pred, y=y_true, mrr=mrr)
+
+    def run_model(self, data, y_true, mrr, use_filter=False):
+        """
+        Runs the dialect detection using a model.
+
+        :param data: The sentences on which to run.
+        :param y_true: The gold standard labels, encoded as a matrix of one-hot encoded vectors.
+        :param mrr: Whether to use Mean Reciprocal Rank or Accuracy.
+        :return: An accuracy score or the MRR score, depending on the MRR parameter.
+        """
+
+        if use_filter:
+            y_pred = self._calc_sentences_w2v(data, self.regions+self.countries, use_filter=True)
+        else:
+            y_pred = self._calc_sentences_w2v(data, self.regions, use_filter=False)
+        return self.accuracy(y_pred=y_pred, y=y_true, mrr=mrr)
+
+    def _calc_sentences_w2v(self, sentences, locales, use_filter=False, use_dict=False):
+        """
+        Calculates, for each sentence, for each word in that sentence, the closest neighbour in the list of locales.
+        The locale that is most often chosen is then returned as the most likely region for this sentence.
 
         :param sentences: list of sentences
-        :param locations: list of locations to be compared to the words in the sentences.
+        :param locales: list of locales to be compared to the words in the sentences.
         :param use_filter: whether to use the countries as a filter.
-        :param use_dict_filter: whether to use the dictionaries as a filter.
         :return: a list of labels, one for each sentence.
         """
 
         labels = []
 
-        start = time.time()
+        for s in sentences:
 
-        for idx, s in enumerate(sentences):
+            if use_dict:
+                scores = self._sentence_to_locale_dict(s, locales)
+            else:
+                scores = self._sentence_to_locale_w2v(s, locales)
 
-            if idx % 1000 == 0:
-                print("did {0} sentences in {1} seconds".format(idx, time.time() - start))
-
-            scores = self._sentence_to_location_model(s, locations, use_dict_filter)
-
-            if use_filter:
-                for c in self._countries:
-                    try:
-                        scores.pop(c)
-                    except KeyError:
-                        pass
+                if use_filter:
+                    for c in self._countries:
+                        try:
+                            scores.pop(c)
+                        except KeyError:
+                            pass
             if scores:
-                found = sorted(scores.items(), key=operator.itemgetter(1), reverse=True)[0][0]
+                found, _ = zip(*sorted(scores.items(), key=operator.itemgetter(1), reverse=True))
                 label = []
 
-                for x in locations:
+                for x in locales:
                     try:
                         label.append(1.0 / (found.index(x) + 1))
                     except ValueError:
@@ -237,140 +172,84 @@ class DialectDetector(object):
                 labels.append(label)
             # Edge case: happens when using filter and every word is filtered.
             else:
-                labels.append(len(locations) * [0])
+                labels.append(len(locales) * [0])
 
         return np.array(labels)
 
-    def _sentence_to_location_model(self, sentence, locations, use_dict_filter):
+    def _sentence_to_locale_w2v(self, sentence, locales):
         """
-        Compares each word in a given sentence to each given location.
+        Compares each word in a given sentence to each given locale.
 
         :param sentence: a string of words representing a sentence
-        :param locations: a list of locations
+        :param locales: a list of locales
         :param use_dict_filter: whether to use the dictionaries as a filter.
         :return: a dictionary of numbers, representing the counts for each region.
         """
 
         counts = defaultdict(int)
 
-        for word, lemma in sentence:
-
-            if use_dict_filter:
-                if lemma in self._dictionaries["nederland"]:
-                    counts["nederland"] += 1
-                    continue
+        for word in sentence:
 
             try:
-                region = self._calc_word(word, locations)
+                # Calculate the similarity score from each word to the name of all regions.
+                sims = [(l, self._model.similarity(l, word)) for l in locales]
+                # Sort the regions by their similarity scores.
+                regions, _ = zip(*sorted(sims, key=operator.itemgetter(1), reverse=True))
 
             except KeyError:
                 continue
-            counts[region] += 1
+            # Add a count to the region with the greatest similarity.
+            counts[regions[0]] += 1
 
         return counts
 
-    def _calc_word(self, word, locations):
+    def _sentence_to_locale_dict(self, sentence, locales):
         """
-        compares a word to each location and returns location with highest similarity to the word.
+        Determines the locale of a single sentence using the dictionary.
 
-        :param word: the word to be compared
-        :param locations: the list of locations
-        :return: the most probable location for this word
-        """
-
-        return sorted([(l, self.model.similarity(l, word)) for l in locations], key=operator.itemgetter(1), reverse=True)[0][0]
-
-    def _calc_sentences_dict(self, sentences, locations):
-        """
-        For each word in each sentence, see if it is in a dict corresponding to a location.
-
-        :param sentences: a list of sentences
-        :param locations: a list of locations
+        :param sentence: The sentence for which to determine the locale.
+        :param locales: The list of locales to consider.
         :return:
         """
 
-        labels = []
+        counts = OrderedDict()
 
-        for s in sentences:
+        for word in sentence:
 
-            scores = self._sentence_to_location_dict(s, locations)
-        
-            if scores:
-                found = list(zip(*(sorted(scores.items(), key=operator.itemgetter(1), reverse=True))))[0]
-                label = []
-
-                for idx, _ in enumerate(locations):
+            for l in locales:
+                if word in self._dictionaries[l]:
                     try:
-                        label.append(1.0 / (found.index(idx) + 1))
-                    except ValueError:
-                        label.append(0)
+                        counts[l] += 1
+                    except KeyError:
+                        counts[l] = 1
 
-                labels.append(label)
-
-            else:
-                labels.append([0 for x in range(len(locations))])
-
-        return np.array(labels)
-
-    def _sentence_to_location_dict(self, sentence, locations):
-        """
-        For each word in a sentence, note how many words correspond
-         to a dialect for a certain location.
-
-        :param sentence: the sentence, tokenized.
-        :param locations: a list of locations
-        :return: a dictionary of with keys as locations, values as counts.
-        """
-
-        counts = defaultdict(int)
-
-        for word, lemma in sentence:
-
-            for l in locations:
-                word_in_location = word in self._dictionaries[l]
-                counts[l] += word_in_location
-
-        return {k: v for k, v in counts.items() if v}
+        return counts
 
 if __name__ == "__main__":
 
     logging.basicConfig(level=logging.INFO)
 
-    modelpath = "/home/tulkens/embeddings_dutch/COW/BIG/COW-wordvecs-big"
-    pathtosparse = "cow_small/cow_small-SPPMI-sparse-1-shift.npz"
-    pathtosparsewords = "cow_small/cow_smallmapping.json"
+    dictionary = {k: set(v) for k, v in json.load(open('data/dictionaries.json')).items()}
+
+    pathtomodel = ""
+
+    model = Word2Vec.load_word2vec_format(pathtomodel)
+
+    dia = DialectDetector(dictionary=dictionary, model=model)
+
+    x = json.load(open("data/x.json"))
+    y = json.load(open("data/y.json"))
 
     mrr = True
+    y = dia.featurize_labels(y, include_countries=False)
+    result, mean = dia.run_dictionary(x, y, mrr)
+    print("TASK 3: {0}".format(result))
+    print("Mean 3: {0}".format(mean))
 
-    isw2v = False
-    dia = DialectDetector("facebook-nl-region_frogged.tsv", "facebook-nl-region.csv")
+    result, mean = dia.run_model(x, y, mrr)
+    print("TASK 1: {0}".format(result))
+    print("Mean 1: {0}".format(mean))
 
-    dia.model = Word2Vec.load_word2vec_format(modelpath)
-
-    emb = set(dia.model.vocab.keys())
-    corpus = {word.lower() for word, lemma in chain.from_iterable(dia.data)}
-
-    cov = len(emb & corpus) / len(corpus)
-
-    sparse = json.load(open(pathtosparsewords))
-
-    emb = set(sparse.keys())
-
-    cov2 = len(emb & corpus) / len(corpus)
-
-    '''if isw2v:
-        dia.model = Word2Vec.load_word2vec_format(modelpath)
-    else:
-        dia.model = SPPMIModel(pathtosparsewords, pathtosparse, initkeys=dia.locations)
-
-    dia.load_dictionaries("dictionaries.json")
-
-    taskscores = dia.run_model(mrr=mrr)
-    json.dump(taskscores, open("results-{0}-mrr:{1}.json".format(modelpath.split("/")[-1], mrr), 'w'))
-
-    dictscores = dia.run_dict(mrr)
-    json.dump(dictscores, open("results-dict-mrr:{0}.json".format(mrr), 'w'))
-
-    #dictscores = dia.run_dict(mrr=True)'''
-
-
+    result, mean = dia.run_model(x, y, mrr)
+    print("TASK 2: {0}".format(result))
+    print("Mean 2: {0}".format(mean))
