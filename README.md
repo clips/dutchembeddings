@@ -18,7 +18,6 @@ The software is released under the [GNU GPL 2.0](http://www.gnu.org/licenses/old
 | Combined      |   [link](http://www.clips.uantwerpen.be/dutchembeddings/combined-160.tar.gz)         |  [link](http://www.clips.uantwerpen.be/dutchembeddings/combined-320.tar.gz)   |
 | [COW](http://corporafromtheweb.org/)           | -           |  [small](http://www.clips.uantwerpen.be/dutchembeddings/cow-320.tar.gz), [big](http://www.clips.uantwerpen.be/dutchembeddings/cow-big.tar.gz)   |
 
-s
 The embeddings are currently provided in `.txt` files which contain vectors in `word2vec` format, which is structured as follows:
 
 The first line contains the size of the vectors and the vocabulary size, separated by a space.
