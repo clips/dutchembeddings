@@ -50,7 +50,7 @@ r.most_similar('kat')
 
 If you want to test the quality of your embeddings, you can use the `relation.py` script. This script takes a `.txt` file of predicates, and creates dataset which is used for evaluation.
 
-This currently only works with the gensim word2vec models.
+This currently only works with the gensim word2vec models or the SPPMI model, as defined above.
 
 Example:
 ```python
