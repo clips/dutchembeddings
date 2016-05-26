@@ -2,13 +2,13 @@
 
 Repository for the word embeddings described in [Evaluating Unsupervised Dutch Word Embeddings as a Linguistic Resource](http://www.lrec-conf.org/proceedings/lrec2016/pdf/1026_Paper.pdf), presented at [LREC 2016](http://lrec2016.lrec-conf.org/en/).
 
-## Embeddings
-
-To download the embeddings, please click on the links in the following table. In almost all cases, the 320-dimensional embeddings outperform the 160-dimensional embeddings.
-
 All embeddings are released under the [CC-BY-SA-4.0](https://creativecommons.org/licenses/by-sa/4.0/) license.
 
 The software is released under the [GNU GPL 2.0](http://www.gnu.org/licenses/old-licenses/gpl-2.0.html).
+
+## Embeddings
+
+To download the embeddings, please click any of the links in the following table. In almost all cases, the 320-dimensional embeddings outperform the 160-dimensional embeddings.
 
 | Corpus        | 160           | 320   |
 | ------------- |:-------------:| -----:|
