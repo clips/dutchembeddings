@@ -54,6 +54,8 @@ This currently only works with the gensim word2vec models.
 
 Example:
 ```python
+from relation import Relation
+
 # Load the predicates.
 rel = Relation("data/question-words.txt")
 
