@@ -6,7 +6,7 @@ All embeddings are released under the [CC-BY-SA-4.0](https://creativecommons.org
 
 The software is released under the [GNU GPL 2.0](http://www.gnu.org/licenses/old-licenses/gpl-2.0.html).
 
-These embeddings have been created with the support of Textgain®. 
+These embeddings have been created with the support of Textgain(https://textgain.com)®. 
 
 ## Embeddings
 
