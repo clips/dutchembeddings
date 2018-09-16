@@ -6,6 +6,8 @@ All embeddings are released under the [CC-BY-SA-4.0](https://creativecommons.org
 
 The software is released under the [GNU GPL 2.0](http://www.gnu.org/licenses/old-licenses/gpl-2.0.html).
 
+These embeddings have been created with the support of Textgain®. 
+
 ## Embeddings
 
 To download the embeddings, please click any of the links in the following table. In almost all cases, the 320-dimensional embeddings outperform the 160-dimensional embeddings.
