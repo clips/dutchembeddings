@@ -43,7 +43,7 @@ model.most_similar('kat')
 # Reach
 from reach import Reach
 
-r = Reach("path/to/vector", header=True)
+r = Reach.load("path/to/vector")
 katvec = r['kat']
 r.most_similar('kat')
 ```
