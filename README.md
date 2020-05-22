@@ -12,13 +12,14 @@ These embeddings have been created with the support of [Textgain](https://textga
 
 To download the embeddings, please click any of the links in the following table. In almost all cases, the 320-dimensional embeddings outperform the 160-dimensional embeddings.
 
+
 | Corpus        | 160           | 320   |
 | ------------- |:-------------:| -----:|
-| Roularta      | [link](http://www.clips.uantwerpen.be/dutchembeddings/roularta-160.tar.gz) | [link](http://www.clips.uantwerpen.be/dutchembeddings/roularta-320.tar.gz) |
-| [Wikipedia](https://dumps.wikimedia.org/nlwiki/20160501/)     | [link](http://www.clips.uantwerpen.be/dutchembeddings/wikipedia-160.tar.gz)      |   [link](http://www.clips.uantwerpen.be/dutchembeddings/wikipedia-320.tar.gz) |
-| [Sonar500](http://tst-centrale.org/nl/tst-materialen/corpora/sonar-corpus-detail)      | [link](http://www.clips.uantwerpen.be/dutchembeddings/sonar-160.tar.gz)      |    [link](http://www.clips.uantwerpen.be/dutchembeddings/sonar-320.tar.gz) |
-| Combined      |   [link](http://www.clips.uantwerpen.be/dutchembeddings/combined-160.tar.gz)         |  [link](http://www.clips.uantwerpen.be/dutchembeddings/combined-320.tar.gz)   |
-| [COW](http://corporafromtheweb.org/)           | -           |  [small](http://www.clips.uantwerpen.be/dutchembeddings/cow-320.tar.gz), [big](http://www.clips.uantwerpen.be/dutchembeddings/cow-big.tar.gz)   |
+| Roularta      | [link](https://www.clips.uantwerpen.be/dutchembeddings/roularta-160.tar.gz) ([mirror](https://onyx.uvt.nl/sakuin/_public/embeddings/roularta-160.tar.gz)) | [link](https://www.clips.uantwerpen.be/dutchembeddings/roularta-320.tar.gz)) ([mirror](https://onyx.uvt.nl/sakuin/_public/embeddings/roularta-320.tar.gz)) |
+| [Wikipedia](https://dumps.wikimedia.org/nlwiki/20160501/)     | [link](https://www.clips.uantwerpen.be/dutchembeddings/wikipedia-160.tar.gz) ([mirror](https://onyx.uvt.nl/sakuin/_public/embeddings/wikipedia-160.tar.gz))      |   [link](https://www.clips.uantwerpen.be/dutchembeddings/wikipedia-320.tar.gz) ([mirror](https://onyx.uvt.nl/sakuin/_public/embeddings/wikipedia-320.tar.gz)) |
+| [Sonar500](http://tst-centrale.org/nl/tst-materialen/corpora/sonar-corpus-detail)      | [link](https://www.clips.uantwerpen.be/dutchembeddings/sonar-160.tar.gz) ([mirror](https://onyx.uvt.nl/sakuin/_public/embeddings/sonar-160.tar.gz))      |    [link](https://www.clips.uantwerpen.be/dutchembeddings/sonar-320.tar.gz) ([mirror](https://onyx.uvt.nl/sakuin/_public/embeddings/sonar-320.tar.gz)) |
+| Combined      |   [link](https://www.clips.uantwerpen.be/dutchembeddings/combined-160.tar.gz) ([mirror](https://onyx.uvt.nl/sakuin/_public/embeddings/combined-160.tar.gz))        |  [link](https://www.clips.uantwerpen.be/dutchembeddings/combined-320.tar.gz) ([mirror](https://onyx.uvt.nl/sakuin/_public/embeddings/combined-320.tar.gz))  |
+| [COW](http://corporafromtheweb.org/)           | -           |  [small](https://www.clips.uantwerpen.be/dutchembeddings/cow-320.tar.gz) ([mirror](https://onyx.uvt.nl/sakuin/_public/embeddings/cow-320.tar.gz)), [big](https://www.clips.uantwerpen.be/dutchembeddings/cow-big.tar.gz) ([mirror](https://onyx.uvt.nl/sakuin/_public/embeddings/cow-320.tar.gz))   |
 
 The embeddings are currently provided in `.txt` files which contain vectors in `word2vec` format, which is structured as follows:
 
