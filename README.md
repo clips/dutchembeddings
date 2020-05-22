@@ -15,11 +15,38 @@ To download the embeddings, please click any of the links in the following table
 
 | Corpus        | 160           | 320   |
 | ------------- |:-------------:| -----:|
-| Roularta      | [link](https://www.clips.uantwerpen.be/dutchembeddings/roularta-160.tar.gz) ([mirror](https://onyx.uvt.nl/sakuin/_public/embeddings/roularta-160.tar.gz)) | [link](https://www.clips.uantwerpen.be/dutchembeddings/roularta-320.tar.gz)) ([mirror](https://onyx.uvt.nl/sakuin/_public/embeddings/roularta-320.tar.gz)) |
+| Roularta      | [link](https://www.clips.uantwerpen.be/dutchembeddings/roularta-160.tar.gz) ([mirror](https://onyx.uvt.nl/sakuin/_public/embeddings/roularta-160.tar.gz)) | [link](https://www.clips.uantwerpen.be/dutchembeddings/roularta-320.tar.gz) ([mirror](https://onyx.uvt.nl/sakuin/_public/embeddings/roularta-320.tar.gz)) |
 | [Wikipedia](https://dumps.wikimedia.org/nlwiki/20160501/)     | [link](https://www.clips.uantwerpen.be/dutchembeddings/wikipedia-160.tar.gz) ([mirror](https://onyx.uvt.nl/sakuin/_public/embeddings/wikipedia-160.tar.gz))      |   [link](https://www.clips.uantwerpen.be/dutchembeddings/wikipedia-320.tar.gz) ([mirror](https://onyx.uvt.nl/sakuin/_public/embeddings/wikipedia-320.tar.gz)) |
 | [Sonar500](http://tst-centrale.org/nl/tst-materialen/corpora/sonar-corpus-detail)      | [link](https://www.clips.uantwerpen.be/dutchembeddings/sonar-160.tar.gz) ([mirror](https://onyx.uvt.nl/sakuin/_public/embeddings/sonar-160.tar.gz))      |    [link](https://www.clips.uantwerpen.be/dutchembeddings/sonar-320.tar.gz) ([mirror](https://onyx.uvt.nl/sakuin/_public/embeddings/sonar-320.tar.gz)) |
 | Combined      |   [link](https://www.clips.uantwerpen.be/dutchembeddings/combined-160.tar.gz) ([mirror](https://onyx.uvt.nl/sakuin/_public/embeddings/combined-160.tar.gz))        |  [link](https://www.clips.uantwerpen.be/dutchembeddings/combined-320.tar.gz) ([mirror](https://onyx.uvt.nl/sakuin/_public/embeddings/combined-320.tar.gz))  |
 | [COW](http://corporafromtheweb.org/)           | -           |  [small](https://www.clips.uantwerpen.be/dutchembeddings/cow-320.tar.gz) ([mirror](https://onyx.uvt.nl/sakuin/_public/embeddings/cow-320.tar.gz)), [big](https://www.clips.uantwerpen.be/dutchembeddings/cow-big.tar.gz) ([mirror](https://onyx.uvt.nl/sakuin/_public/embeddings/cow-320.tar.gz))   |
+
+> See below for a usage explanation.
+
+## Citing
+
+If you use any of the resources from this paper, please cite our paper, as follows:
+
+```bibtex
+@InProceedings{tulkens2016evaluating,
+  author = {Stephan Tulkens and Chris Emmery and Walter Daelemans},
+  title = {Evaluating Unsupervised Dutch Word Embeddings as a Linguistic Resource},
+  booktitle = {Proceedings of the Tenth International Conference on Language Resources and Evaluation (LREC 2016)},
+  year = {2016},
+  month = {may},
+  date = {23-28},
+  location = {Portorož, Slovenia},
+  editor = {Nicoletta Calzolari (Conference Chair) and Khalid Choukri and Thierry Declerck and Marko Grobelnik and Bente Maegaard and Joseph Mariani and Asuncion Moreno and Jan Odijk and Stelios Piperidis},
+  publisher = {European Language Resources Association (ELRA)},
+  address = {Paris, France},
+  isbn = {978-2-9517408-9-1},
+  language = {english}
+ }
+ ```
+
+Please also consider citing the corpora of the embeddings you use. Without the people who made the corpora, the embeddings could never have been created.
+
+## Usage
 
 The embeddings are currently provided in `.txt` files which contain vectors in `word2vec` format, which is structured as follows:
 
@@ -68,26 +95,3 @@ model = Word2vec.load_word2vec_format("path/to/model")
 # Test the model
 rel.test_model(model)
 ```
-
-## Citing
-
-If you use any of the resources from this paper, please cite our paper, as follows:
-
-```bibtex
-@InProceedings{tulkens2016evaluating,
-  author = {Stephan Tulkens and Chris Emmery and Walter Daelemans},
-  title = {Evaluating Unsupervised Dutch Word Embeddings as a Linguistic Resource},
-  booktitle = {Proceedings of the Tenth International Conference on Language Resources and Evaluation (LREC 2016)},
-  year = {2016},
-  month = {may},
-  date = {23-28},
-  location = {Portorož, Slovenia},
-  editor = {Nicoletta Calzolari (Conference Chair) and Khalid Choukri and Thierry Declerck and Marko Grobelnik and Bente Maegaard and Joseph Mariani and Asuncion Moreno and Jan Odijk and Stelios Piperidis},
-  publisher = {European Language Resources Association (ELRA)},
-  address = {Paris, France},
-  isbn = {978-2-9517408-9-1},
-  language = {english}
- }
- ```
-
-Please also consider citing the corpora of the embeddings you use. Without the people who made the corpora, the embeddings could never have been created.
