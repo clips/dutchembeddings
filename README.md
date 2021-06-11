@@ -62,16 +62,16 @@ If you use `python`, these files can be loaded with [`gensim`](https://github.co
 
 ```python
 # Gensim
-from gensim.models import word2vec
+from gensim.models import KeyedVectors
 
-model = Word2Vec.load_word2vec_format("path/to/vector", binary=False)
+model = KeyedVectors.load_word2vec_format('path/to/embedding-file')
 katvec = model['kat']
 model.most_similar('kat')
 
 # Reach
 from reach import Reach
 
-r = Reach.load("path/to/vector")
+r = Reach.load('path/to/embedding-file')
 katvec = r['kat']
 r.most_similar('kat')
 ```
@@ -87,10 +87,10 @@ Example:
 from relation import Relation
 
 # Load the predicates.
-rel = Relation("data/question-words.txt")
+rel = Relation('data/question-words.txt')
 
 # load a word2vec model
-model = Word2vec.load_word2vec_format("path/to/model")
+model = KeyedVectors.load_word2vec_format('path/to/embedding-file')
 
 # Test the model
 rel.test_model(model)
